@@ -539,7 +539,7 @@
       },
       "properties": {
         "platformUpdateDomainCount": 3,
-        "platformFaultDomainCount": 3
+        "platformFaultDomainCount": 2
       },
       "location": "[resourceGroup().location]"
     },
@@ -781,7 +781,7 @@
       },
       "properties": {
         "platformUpdateDomainCount": 5,
-        "platformFaultDomainCount": 3
+        "platformFaultDomainCount": 2
       },
       "copy": {
         "name": "cnAvailabilitySetCopy",
