@@ -327,9 +327,6 @@
       "type": "Microsoft.Network/networkInterfaces",
       "name": "[variables('nicNameHN')]",
       "location": "[resourceGroup().location]",
-      "dependsOn": [
-        "Microsoft.Resources/deployments/setupClusterPublicIP"
-      ],
       "properties": {
         "ipConfigurations": [
           {
@@ -548,9 +545,5 @@
     }
   ],
   "outputs": {
-    "clusterDNSName": {
-      "type": "string",
-      "value": "[reference('setupClusterPublicIP').outputs.fqdn.value]"
-    }
   }
 }
