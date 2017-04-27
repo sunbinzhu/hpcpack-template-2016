@@ -110,7 +110,7 @@
               "createOption": "Empty",
               "managedDisk": {
                 "storageAccountType": "[parameters('storageAccountType')]"
-              }
+              },
               "diskSizeGB": "[parameters('dataDiskSizeInGB')]",
               "lun": 0
             }
