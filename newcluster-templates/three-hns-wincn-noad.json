@@ -147,11 +147,8 @@
   "variables": {
     "apiVersion": "2015-06-15",
     "storageAccountType": "Standard_LRS",
-    "storageAccountNameHN": "[concat('hpc', uniqueString(resourceGroup().id, parameters('clusterName')))]",
-    "storageAccountIdHN": "[resourceId('Microsoft.Storage/storageAccounts',variables('storageAccountNameHN'))]",
-    "cnStorageAccountNamePrefix": "[concat('hpc', uniqueString(resourceGroup().id, parameters('computeNodeNamePrefix')))]",
-    "nbrCNPerStorageAccount": 30,
-    "cnStorageAccountNumber": "[add(div(sub(parameters('computeNodeNumber'), 1), variables('nbrCNPerStorageAccount')), 1)]",
+    "storageAccountName": "[concat('hpc', uniqueString(resourceGroup().id, parameters('clusterName')))]",
+    "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts',variables('storageAccountName'))]",
     "lbName": "[concat(parameters('clusterName'),'-lb')]",
     "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('lbName'))]",
     "lbFrontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/LoadBalancerFrontEnd')]",
@@ -223,16 +220,16 @@
     },
     "headNodeImageRef": "[variables('headNodeImages')[parameters('headNodeOS')]]",
     "computeNodeImageRef": "[variables('computeNodeImages')[parameters('computeNodeOS')]]",
-    "sharedResxBaseUrl": "https://raw.githubusercontent.com/sunbinzhu/HPCPack2016/master/newcluster-templates/shared-resources"
+    "sharedResxBaseUrl": "https://raw.githubusercontent.com/sunbinzhu/HPCPack2016/manageddisk/newcluster-templates/shared-resources"
   },
   "resources": [
     {
       "type": "Microsoft.Storage/storageAccounts",
-      "name": "[variables('storageAccountNameHN')]",
+      "name": "[variables('storageAccountName')]",
       "apiVersion": "[variables('apiVersion')]",
       "location": "[resourceGroup().location]",
       "properties": {
-        "accountType": "[variables('storageAccountType')]"
+        "accountType": "Standard_LRS"
       }
     },
     {
@@ -431,8 +428,7 @@
       "name": "[concat('create', variables('headNodes')[copyIndex()])]",
       "dependsOn": [
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetNameHN'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('headNodes')[copyIndex()], variables('uniqueNicSuffix'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountNameHN'))]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('headNodes')[copyIndex()], variables('uniqueNicSuffix'))]"
       ],
       "copy": {
         "name": "createHeadNodeCopy",
@@ -460,8 +456,8 @@
           "vmSize": {
             "value": "[parameters('headNodeVMSize')]"
           },
-          "storageAccountName": {
-            "value": "[variables('storageAccountNameHN')]"
+          "storageAccountType": {
+            "value": "[variables('storageAccountType')]"
           },
           "imageReference": {
             "value": "[variables('headNodeImageRef')]"
@@ -487,8 +483,7 @@
       "name": "[concat('createDBServer', parameters('sqlServerVMName'))]",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetNameHN'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountNameHN'))]"
+        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetNameHN'))]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -509,8 +504,8 @@
           "vmSize": {
             "value": "[parameters('sqlServerVMSize')]"
           },
-          "storageAccountName": {
-            "value": "[variables('storageAccountNameHN')]"
+          "storageAccountType": {
+            "value": "[variables('storageAccountType')]"
           },
           "imageReference": {
             "value": {
@@ -612,7 +607,8 @@
       "dependsOn": [
         "HNPreReqInstallCopy",
         "[concat('Microsoft.Resources/deployments/create', variables('headNodes')[0])]",
-        "[concat('Microsoft.Resources/deployments/createDBServer', parameters('sqlServerVMName'))]"
+        "[concat('Microsoft.Resources/deployments/createDBServer', parameters('sqlServerVMName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Powershell",
@@ -645,7 +641,7 @@
               "UserName": "[parameters('adminUsername')]",
               "Password": "[parameters('adminPassword')]"
             },
-            "AzureStorageConnString": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountNameHN'), ';AccountKey=', listKeys(variables('storageAccountIdHN'),variables('apiVersion')).key1)]",
+            "AzureStorageConnString": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountId'),variables('apiVersion')).key1)]",
             "SqlLoginCredential": {
               "UserName": "[parameters('sqlLoginName')]",
               "Password": "[parameters('sqlLoginPassword')]"
@@ -665,26 +661,12 @@
       }
     },
     {
-      "type": "Microsoft.Storage/storageAccounts",
-      "name": "[concat(variables('cnStorageAccountNamePrefix'), padLeft(string(copyIndex()), 2, '0'))]",
-      "apiVersion": "[variables('apiVersion')]",
-      "location": "[resourceGroup().location]",
-      "copy": {
-        "name": "cnStorageAccountCopy",
-        "count": "[variables('cnStorageAccountNumber')]"
-      },
-      "properties": {
-        "accountType": "[variables('storageAccountType')]"
-      }
-    },
-    {
       "apiVersion": "2015-01-01",
       "type": "Microsoft.Resources/deployments",
       "name": "[concat('create', parameters('computeNodeNamePrefix'), padLeft(string(copyIndex()), 3, '0'))]",
       "dependsOn": [
         "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Compute/availabilitySets/', variables('cnAvailabilitySetNamePrefix'), padLeft(string(div(copyIndex(), variables('nbrVMPerAvailabilitySet'))), 2, '0'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('cnStorageAccountNamePrefix'), padLeft(string(div(copyIndex(), variables('nbrCNPerStorageAccount'))), 2, '0'))]"
+        "[concat('Microsoft.Compute/availabilitySets/', variables('cnAvailabilitySetNamePrefix'), padLeft(string(div(copyIndex(), variables('nbrVMPerAvailabilitySet'))), 2, '0'))]"
       ],
       "copy": {
         "name": "CN",
@@ -709,8 +691,8 @@
           "vmSize": {
             "value": "[parameters('computeNodeVMSize')]"
           },
-          "storageAccountName": {
-            "value": "[concat(variables('cnStorageAccountNamePrefix'), padLeft(string(div(copyIndex(), variables('nbrCNPerStorageAccount'))), 2, '0'))]"
+          "storageAccountType": {
+            "value": "[variables('storageAccountType')]"
           },
           "imageReference": {
             "value": "[variables('computeNodeImageRef')]"
