@@ -355,7 +355,7 @@
     },
     {
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(parameters('clusterName'),'/installSingleHeadNode')]",
+      "name": "[concat(parameters('clusterName'),'/setupHpcHeadNode')]",
       "apiVersion": "[variables('apiVersion')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
