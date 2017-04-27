@@ -478,8 +478,11 @@
     {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[concat(variables('cnAvailabilitySetNamePrefix'), padLeft(string(copyIndex()), 2, '0'))]",
-      "apiVersion": "[variables('apiVersion')]",
+      "apiVersion": "2016-04-30-preview",
       "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Aligned"
+      },
       "copy": {
         "name": "cnAvailabilitySetCopy",
         "count": "[variables('cnAvailabilitySetNumber')]"
