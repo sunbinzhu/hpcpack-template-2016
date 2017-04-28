@@ -538,7 +538,7 @@
             "value": "[variables('lnxCertSecrets')]"
           },
           "headNodeList": {
-            "value": "[parameters('clusterName')]"
+            "value": "[concat(parameters('clusterName'), '.', parameters('domainName'))]"
           }
         }
       }
