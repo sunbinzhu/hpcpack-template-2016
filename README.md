@@ -41,7 +41,14 @@ This template deploys an HPC Pack cluster with one **single** head node for Wind
     <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
-### Template 6: Single head node cluster for Linux workloads with existing Active Directory Domain (No public IP)
+### Template 6: Single head node cluster for Windows workloads with existing Active Directory Domain (No public IP)
+This template deploys an HPC Pack cluster with one **single** head node for Windows HPC workloads in an existing Active Directory Domain forest. The cluster includes one **single** head node with local databases (SQL server 2016 Express version), and a configurable number of **Windows** compute nodes. No public IP address is created for the head nodes. Use this template if you have a virtual network with Express Route configured and you want to join the cluster to your on-premises Active Directory Domain.
+
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fsunbinzhu%2FHPCPack2016%2Fmanageddisk%2Fnewcluster-templates%2Fsingle-hn-wincn-existing-ad-no-public-ip.json" target="_blank">
+    <img src="http://azuredeploy.net/deploybutton.png"/>
+</a>
+
+### Template 7: Single head node cluster for Linux workloads with existing Active Directory Domain (No public IP)
 This template deploys an HPC Pack cluster with one **single** head node for Windows HPC workloads in an existing Active Directory Domain forest. The cluster includes one **single** head node with local databases (SQL server 2016 Express version), and a configurable number of **Linux** compute nodes. No public IP address is created for the head nodes. Use this template if you have a virtual network with Express Route configured and you want to join the cluster to your on-premises Active Directory Domain.
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fsunbinzhu%2FHPCPack2016%2Fmanageddisk%2Fnewcluster-templates%2Fsingle-hn-lnxcn-existing-ad-no-public-ip.json" target="_blank">
