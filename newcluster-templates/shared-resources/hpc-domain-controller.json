@@ -45,6 +45,15 @@
         "description": "The password of the administrator"
       }
     },
+    "osDiskSizeInGB": {
+      "type": "int",
+      "defaultValue": 128,
+      "minValue": 30,
+      "maxValue": 1023,
+      "metadata": {
+        "description": "The os disk size in GB"
+      }
+    },
     "dataDiskSizeInGB": {
       "type": "int",
       "metadata": {
@@ -99,6 +108,7 @@
             "name": "[concat(parameters('vmName'), '-osdisk')]",
             "caching": "ReadOnly",
             "createOption": "FromImage",
+            "diskSizeGB": "[parameters('osDiskSizeInGB')]",
             "managedDisk": {
               "storageAccountType": "[parameters('storageAccountType')]"
             }

@@ -57,6 +57,15 @@
         "description": "The availability set name"
       }
     },
+    "osDiskSizeInGB": {
+      "type": "int",
+      "defaultValue": 128,
+      "minValue": 30,
+      "maxValue": 1023,
+      "metadata": {
+        "description": "The os disk size in GB"
+      }
+    },
     "customData": {
       "type": "string",
       "defaultValue": "[base64('None')]",
@@ -132,6 +141,7 @@
             "name": "[concat(parameters('vmName'), '-osdisk')]",
             "caching": "ReadOnly",
             "createOption": "FromImage",
+            "diskSizeGB": "[parameters('osDiskSizeInGB')]",
             "managedDisk": {
               "storageAccountType": "[parameters('storageAccountType')]"
             }
