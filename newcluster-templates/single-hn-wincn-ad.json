@@ -741,7 +741,8 @@
       "type": "Microsoft.Resources/deployments",
       "name": "installHpcHeadNode",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('clusterName'), '/extensions/installInfiniBandDriver')]"
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('clusterName'), '/extensions/installInfiniBandDriver')]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
       ],
       "properties": {
         "mode": "Incremental",
@@ -754,10 +755,6 @@
               "name": "[concat(parameters('clusterName'),'/setupHpcHeadNode')]",
               "apiVersion": "2017-12-01",
               "location": "[resourceGroup().location]",
-              "dependsOn": [
-                "[concat('Microsoft.Resources/deployments/joinDomain', parameters('clusterName'))]",
-                "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
-              ],
               "properties": {
                 "publisher": "Microsoft.Powershell",
                 "type": "DSC",
