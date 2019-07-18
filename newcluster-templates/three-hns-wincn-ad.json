@@ -1036,7 +1036,9 @@
                 "location": "[resourceGroup().location]",
                 "properties": {
                   "addressSpace": {
-                    "addressPrefixes": "[variables('addressPrefix')]"
+                    "addressPrefixes": [
+                      "[variables('addressPrefix')]"
+                    ]
                   },
                   "dhcpOptions": {
                     "dnsServers": [
