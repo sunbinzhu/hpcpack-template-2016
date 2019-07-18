@@ -78,7 +78,7 @@
       "type": "string",
       "defaultValue": "Standard_D3_v2",
       "metadata": {
-        "description": "The VM size of the compute nodes, all available VM sizes in Azure can be found at <a href='https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-sizes' target='_blank'>Azure VM Sizes</a>. Note that some VM sizes in the list are only available in some particular locations. Please check the availability and the price of the VM sizes at https://azure.microsoft.com/pricing/details/virtual-machines/windows/ before deployment."
+        "description": "The VM size of the compute nodes, all available VM sizes in Azure can be found at https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-sizes. Note that some VM sizes in the list are only available in some particular locations. Please check the availability and the price of the VM sizes at https://azure.microsoft.com/pricing/details/virtual-machines/windows/ before deployment."
       }
     },
     "computeNodeOsDiskType": {
@@ -90,7 +90,7 @@
         "Premium_SSD"
       ],
       "metadata": {
-        "description": "The disk type of compute node VM. Note that Premium_SSD only supports some VM sizes, see <a href='https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-sizes' target='_blank'>Azure VM Sizes</a>"
+        "description": "The disk type of compute node VM. Note that Premium_SSD only supports some VM sizes, see https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-sizes."
       }
     },
     "dataDiskCount": {
@@ -427,6 +427,9 @@
         "offer": "UbuntuServer",
         "sku": "18.04-LTS",
         "version": "latest"
+      },
+      "CustomImage": {
+        "id": "[parameters('computeNodeImageResourceId')]"
       }
     },
     "computeNodeImageRef": "[variables('computeNodeImages')[parameters('computeNodeImage')]]",
