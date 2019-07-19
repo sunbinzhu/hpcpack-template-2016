@@ -878,7 +878,7 @@
             "value": "[trim(parameters('certThumbprint'))]"
           },
           "headNodeList": {
-            "value": "[parameters('clusterName')]"
+            "value": "[parameters('headNodeList')]"
           },
           "joinDomain": {
             "value": true
