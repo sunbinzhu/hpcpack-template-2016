@@ -707,7 +707,6 @@
           },
           "configurationArguments": {
             "SSLThumbprint": "[parameters('certThumbprint')]",
-            "LinuxCommOverHttp": true,
             "SQLServerInstance": "[parameters('sqlServerVMName')]",
             "CNSize": "[parameters('computeNodeVMSize')]",
             "SubscriptionId": "[subscription().subscriptionId]",

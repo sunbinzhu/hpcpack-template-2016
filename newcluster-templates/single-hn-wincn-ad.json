@@ -768,7 +768,6 @@
                   },
                   "configurationArguments": {
                     "SSLThumbprint": "[parameters('certThumbprint')]",
-                    "LinuxCommOverHttp": true,
                     "CNSize": "[parameters('computeNodeVMSize')]",
                     "SubscriptionId": "[subscription().subscriptionId]",
                     "VNet": "[variables('virtualNetworkName')]",

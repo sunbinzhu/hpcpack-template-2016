@@ -327,6 +327,7 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "ClusterConnectionString": "[parameters('headNodeList')]",
+              "SSLThumbprint": "[parameters('certThumbprint')]",
               "DomainName": "[parameters('domainName')]"
             }
           }
