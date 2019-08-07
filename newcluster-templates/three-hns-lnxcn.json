@@ -207,13 +207,6 @@
         "description": "Sql login password."
       }
     },
-    "hpcPackVersion": {
-      "type": "string",
-      "defaultValue": "latest",
-      "metadata": {
-        "description": "The version for HPC Pack 2016. It is strongly recommended to specify as 'latest'. The deployment will fail if an incorrect version is specified."
-      }
-    },
     "vaultName": {
       "type": "string",
       "metadata": {
@@ -1184,7 +1177,7 @@
             "Subnet": "[variables('subnet1Name')]",
             "Location": "[resourceGroup().location]",
             "ResourceGroup": "[resourceGroup().name]",
-            "VaultResourceGroup": "[parameters('VaultResourceGroup')]",
+            "VaultResourceGroup": "[trim(parameters('VaultResourceGroup'))]",
             "CertificateUrl": "[parameters('CertificateUrl')]",
             "CNNamePrefix": "[parameters('computeNodeNamePrefix')]"
           }

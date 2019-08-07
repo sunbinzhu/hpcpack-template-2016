@@ -214,6 +214,17 @@
         "description": "Thumbprint of the certificate."
       }
     },
+    "createPublicIPAddressForHeadNode": {
+      "type": "string",
+      "defaultValue": "Yes",
+      "allowedValues": [
+        "Yes",
+        "No"
+      ],
+      "metadata": {
+        "description": "Indicates whether to create a public IP address for head nodes."
+      }
+    },
     "enableAcceleratedNetworking": {
       "type": "string",
       "defaultValue": "No",
@@ -345,16 +356,21 @@
     "headNodes": "[split(parameters('headNodeList'), ',')]",
     "vnetID": "[resourceId(parameters('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/', parameters('subnetName'))]",
+    "privateClusterFQDN": "[concat(toLower(parameters('clusterName')), '.', parameters('domainName'))]",
     "publicIPSuffix": "[uniqueString(resourceGroup().id)]",
     "publicIPName": "[concat(parameters('clusterName'),'publicip')]",
     "publicIPDNSNameLabel": "[concat(toLower(parameters('clusterName')), variables('publicIPSuffix'))]",
     "publicIPAddressType": "Dynamic",
+    "publicIpAddressId": {
+      "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPName'))]"
+    },
     "availabilitySetNameHN": "[concat(parameters('clusterName'), '-avset')]",
     "cnAvailabilitySetNamePrefix": "[concat(parameters('computeNodeNamePrefix'), 'avset')]",
     "nbrVMPerAvailabilitySet": 80,
     "cnAvailabilitySetNumber": "[add(div(parameters('computeNodeNumber'), variables('nbrVMPerAvailabilitySet')), 1)]",
     "uniqueSuffix": "[uniqueString(variables('subnetRef'))]",
     "uniqueNicSuffix": "[concat('-nic-', variables('uniqueSuffix'))]",
+    "uniquePubNicSuffix": "[concat('-pubnic-', variables('uniqueSuffix'))]",
     "nsgName": "[concat('hpcnsg-',uniquestring(resourceGroup().id, variables('subnetRef')))]",
     "rdmaVMSizes": [
       "Standard_A8",
@@ -465,32 +481,23 @@
       "properties": {}
     },
     {
-      "name": "setupClusterPublicIP",
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2017-05-10",
+      "condition": "[equals(parameters('createPublicIPAddressForHeadNode'), 'Yes')]",
+      "apiVersion": "2018-08-01",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPName')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "Basic"
+      },
       "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(variables('sharedResxBaseUrl'), '/publicip-new.json')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "publicIPAddressName": {
-            "value": "[variables('publicIPName')]"
-          },
-          "publicIPAddressType": {
-            "value": "[variables('publicIPAddressType')]"
-          },
-          "domainNameLabel": {
-            "value": "[variables('publicIPDNSNameLabel')]"
-          },
-          "publicIPRGName": {
-            "value": "[resourceGroup().name]"
-          }
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('publicIPDNSNameLabel')]"
         }
       }
     },
     {
+      "condition": "[equals(parameters('createPublicIPAddressForHeadNode'), 'Yes')]",
       "type": "Microsoft.Network/networkSecurityGroups",
       "name": "[variables('nsgName')]",
       "apiVersion": "2017-10-01",
@@ -585,6 +592,7 @@
       }
     },
     {
+      "condition": "[equals(parameters('createPublicIPAddressForHeadNode'), 'Yes')]",
       "name": "[concat(variables('headNodes')[copyIndex()], 'PublicIp')]",
       "type": "Microsoft.Network/publicIPAddresses",
       "apiVersion": "2017-10-01",
@@ -601,21 +609,20 @@
       }
     },
     {
+      "condition": "[equals(parameters('createPublicIPAddressForHeadNode'), 'Yes')]",
       "apiVersion": "2017-10-01",
       "name": "[variables('lbName')]",
       "type": "Microsoft.Network/loadBalancers",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "Microsoft.Resources/deployments/setupClusterPublicIP"
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPName'))]"
       ],
       "properties": {
         "frontendIPConfigurations": [
           {
             "name": "LoadBalancerFrontEnd",
             "properties": {
-              "publicIPAddress": {
-                "id": "[reference('setupClusterPublicIP').outputs.resourceId.value]"
-              }
+              "publicIPAddress": "[variables('publicIpAddressId')]"
             }
           }
         ],
@@ -697,9 +704,10 @@
       }
     },
     {
+      "condition": "[equals(parameters('createPublicIPAddressForHeadNode'), 'Yes')]",
       "apiVersion": "2017-10-01",
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(variables('headNodes')[copyIndex()], variables('uniqueNicSuffix'))]",
+      "name": "[concat(variables('headNodes')[copyIndex()], variables('uniquePubNicSuffix'))]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]",
@@ -707,7 +715,7 @@
         "[concat('Microsoft.Network/publicIPAddresses/', concat(variables('headNodes')[copyIndex()], 'PublicIp'))]"
       ],
       "copy": {
-        "name": "HNNics",
+        "name": "HNNicsWithPubicIP",
         "count": "[length(variables('headNodes'))]"
       },
       "properties": {
@@ -742,6 +750,31 @@
       }
     },
     {
+      "condition": "[not(equals(parameters('createPublicIPAddressForHeadNode'), 'Yes'))]",
+      "apiVersion": "2017-10-01",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('headNodes')[copyIndex()], variables('uniqueNicSuffix'))]",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "HNNicsWithoutPublicIP",
+        "count": "[length(variables('headNodes'))]"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "IPConfig",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              }
+            }
+          }
+        ],
+        "enableAcceleratedNetworking": "[equals(parameters('enableAcceleratedNetworking'), 'Yes')]"
+      }
+    },
+    {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetNameHN')]",
       "apiVersion": "2017-12-01",
@@ -761,7 +794,8 @@
       "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetNameHN'))]",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('headNodes')[copyIndex()], variables('uniqueNicSuffix'))]"
+        "[concat('Microsoft.Network/networkInterfaces/', variables('headNodes')[copyIndex()], variables('uniqueNicSuffix'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('headNodes')[copyIndex()], variables('uniquePubNicSuffix'))]"
       ],
       "copy": {
         "name": "createHeadNodeCopy",
@@ -798,7 +832,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('headNodes')[copyIndex()], variables('uniqueNicSuffix')))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('headNodes')[copyIndex()], if(equals(parameters('createPublicIPAddressForHeadNode'), 'Yes'), variables('uniquePubNicSuffix'), variables('uniqueNicSuffix'))))]"
             }
           ]
         }
@@ -853,7 +887,7 @@
           "imageReference": {
             "value": {
               "publisher": "MicrosoftSQLServer",
-              "offer": "SQL2016SP1-WS2016",
+              "offer": "SQL2016SP2-WS2016",
               "sku": "Standard",
               "version": "latest"
             }
@@ -1219,7 +1253,7 @@
   "outputs": {
     "clusterDNSName": {
       "type": "string",
-      "value": "[reference('setupClusterPublicIP').outputs.fqdn.value]"
+      "value": "[if(equals(parameters('createPublicIPAddressForHeadNode'), 'No'), variables('privateClusterFQDN'), reference(variables('publicIpAddressId').id, '2018-08-01').dnsSettings.fqdn)]"
     }
   }
 }
