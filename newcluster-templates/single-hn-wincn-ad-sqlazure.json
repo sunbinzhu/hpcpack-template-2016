@@ -5,33 +5,160 @@
     "clusterName": {
       "type": "string",
       "minLength": 3,
-      "maxLength": 15,
+      "maxLength": 12,
       "metadata": {
-        "description": "The name of the HPC cluster. It must be unique in the domain forest; It must contain between 3 and 15 characters with lowercase letters and numbers, and must start with a letter."
-      }
-    },
-    "virtualNetworkName": {
-      "type": "string",
-      "metadata": {
-        "description": "The existing virtual network in which all VMs of the HPC cluster will be created."
-      }
-    },
-    "virtualNetworkResourceGroupName": {
-      "type": "string",
-      "metadata": {
-        "description": "The resource group in which the existing virtual network was created."
-      }
-    },
-    "subnetName": {
-      "type": "string",
-      "metadata": {
-        "description": "The existing subnet in which all VMs of the HPC cluster will be created."
+        "description": "The name of the HPC cluster, also used as the head node name and the host name prefix of the domain controller. It must contain between 3 and 12 characters with lowercase letters and numbers, and must start with a letter."
       }
     },
     "domainName": {
       "type": "string",
+      "defaultValue": "hpc.local",
       "metadata": {
-        "description": "The fully qualified domain name (FQDN) for the existing domain forest in which the HPC cluster will join, for example 'hpc.local'."
+        "description": "The fully qualified domain name (FQDN) for the private domain forest which will be created by this template, for example 'hpc.local'."
+      }
+    },
+    "sqlServerName": {
+      "type": "string",
+      "metadata": {
+        "description": "The Azure SQL Server name."
+      }
+    },
+    "ManagementDBServiceTier": {
+      "type": "string",
+      "defaultValue": "Standard_S3",
+      "allowedValues": [
+        "Standard_S0",
+        "Standard_S1",
+        "Standard_S2",
+        "Standard_S3",
+        "Standard_S4",
+        "Standard_S6",
+        "Standard_S7",
+        "Standard_S9",
+        "Standard_S12",
+        "Premium_P1",
+        "Premium_P2",
+        "Premium_P3",
+        "Premium_P4",
+        "Premium_P6",
+        "Premium_P11",
+        "Premium_P15"
+      ],
+      "metadata": {
+        "description": "The edition of the Azure SQL database."
+      }
+    },
+    "SchedulerDBServiceTier": {
+      "type": "string",
+      "defaultValue": "Standard_S4",
+      "allowedValues": [
+        "Standard_S0",
+        "Standard_S1",
+        "Standard_S2",
+        "Standard_S3",
+        "Standard_S4",
+        "Standard_S6",
+        "Standard_S7",
+        "Standard_S9",
+        "Standard_S12",
+        "Premium_P1",
+        "Premium_P2",
+        "Premium_P3",
+        "Premium_P4",
+        "Premium_P6",
+        "Premium_P11",
+        "Premium_P15"
+      ],
+      "metadata": {
+        "description": "The edition of the Azure SQL database."
+      }
+    },
+    "MonitoringDBServiceTier": {
+      "type": "string",
+      "defaultValue": "Standard_S0",
+      "allowedValues": [
+        "Standard_S0",
+        "Standard_S1",
+        "Standard_S2",
+        "Standard_S3",
+        "Standard_S4",
+        "Standard_S6",
+        "Standard_S7",
+        "Standard_S9",
+        "Standard_S12",
+        "Premium_P1",
+        "Premium_P2",
+        "Premium_P3",
+        "Premium_P4",
+        "Premium_P6",
+        "Premium_P11",
+        "Premium_P15"
+      ],
+      "metadata": {
+        "description": "The edition of the Azure SQL database."
+      }
+    },
+    "ReportingDBServiceTier": {
+      "type": "string",
+      "defaultValue": "Standard_S0",
+      "allowedValues": [
+        "Standard_S0",
+        "Standard_S1",
+        "Standard_S2",
+        "Standard_S3",
+        "Standard_S4",
+        "Standard_S6",
+        "Standard_S7",
+        "Standard_S9",
+        "Standard_S12",
+        "Premium_P1",
+        "Premium_P2",
+        "Premium_P3",
+        "Premium_P4",
+        "Premium_P6",
+        "Premium_P11",
+        "Premium_P15"
+      ],
+      "metadata": {
+        "description": "The edition of the Azure SQL database."
+      }
+    },
+    "DiagnosticsDBServiceTier": {
+      "type": "string",
+      "defaultValue": "Standard_S0",
+      "allowedValues": [
+        "Standard_S0",
+        "Standard_S1",
+        "Standard_S2",
+        "Standard_S3",
+        "Standard_S4",
+        "Standard_S6",
+        "Standard_S7",
+        "Standard_S9",
+        "Standard_S12",
+        "Premium_P1",
+        "Premium_P2",
+        "Premium_P3",
+        "Premium_P4",
+        "Premium_P6",
+        "Premium_P11",
+        "Premium_P15"
+      ],
+      "metadata": {
+        "description": "The edition of the Azure SQL database."
+      }
+    },
+    "sqlLoginName": {
+      "type": "string",
+      "defaultValue": "hpcsql",
+      "metadata": {
+        "description": "Sql login name."
+      }
+    },
+    "sqlLoginPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Sql login password."
       }
     },
     "headNodeOS": {
@@ -205,9 +332,8 @@
     },
     "headNodeDataDiskCount": {
       "type": "int",
-      "defaultValue": 0,
+      "defaultValue": 1,
       "allowedValues": [
-        0,
         1,
         2,
         4,
@@ -315,8 +441,12 @@
     },
     "storageAccountName": "[concat('hpc', uniqueString(resourceGroup().id, parameters('clusterName')))]",
     "storageAccountId": "[resourceId('Microsoft.Storage/storageAccounts',variables('storageAccountName'))]",
-    "vnetID": "[resourceId(parameters('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/', parameters('subnetName'))]",
+    "addressPrefix": "10.0.0.0/16",
+    "subnet1Name": "Subnet-1",
+    "subnet1Prefix": "10.0.0.0/22",
+    "virtualNetworkName": "[concat(parameters('clusterName'),'vnet')]",
+    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
+    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
     "privateClusterFQDN": "[concat(toLower(parameters('clusterName')), '.', parameters('domainName'))]",
     "publicIPName": "[concat(parameters('clusterName'),'publicip')]",
     "publicIPDNSNameLabel": "[concat(toLower(parameters('clusterName')), uniqueString(resourceGroup().id))]",
@@ -445,6 +575,156 @@
       "properties": {}
     },
     {
+      "apiVersion": "2017-10-01",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('addressPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('subnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('subnet1Prefix')]",
+              "serviceEndpoints": [
+                {
+                  "service": "Microsoft.Sql",
+                  "locations": [
+                    "[resourceGroup().location]"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[parameters('sqlServerName')]",
+      "type": "Microsoft.Sql/servers",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
+      ],
+      "tags": {
+        "displayName": "SqlServer"
+      },
+      "apiVersion": "2015-05-01-preview",
+      "properties": {
+        "administratorLogin": "[parameters('sqlLoginName')]",
+        "administratorLoginPassword": "[parameters('sqlLoginPassword')]",
+        "version": "12.0"
+      },
+      "resources": [
+        {
+          "name": "HPCManagement",
+          "type": "databases",
+          "location": "[resourceGroup().location]",
+          "tags": {
+            "displayName": "HPCManagement"
+          },
+          "apiVersion": "2014-04-01",
+          "dependsOn": [
+            "[parameters('sqlServerName')]"
+          ],
+          "properties": {
+            "edition": "[split(parameters('ManagementDBServiceTier'), '_')[0]]",
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "maxSizeBytes": "214748364800",
+            "requestedServiceObjectiveName": "[split(parameters('ManagementDBServiceTier'), '_')[1]]"
+          }
+        },
+        {
+          "name": "HPCScheduler",
+          "type": "databases",
+          "location": "[resourceGroup().location]",
+          "tags": {
+            "displayName": "HPCScheduler"
+          },
+          "apiVersion": "2014-04-01",
+          "dependsOn": [
+            "[parameters('sqlServerName')]"
+          ],
+          "properties": {
+            "edition": "[split(parameters('SchedulerDBServiceTier'), '_')[0]]",
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "maxSizeBytes": "214748364800",
+            "requestedServiceObjectiveName": "[split(parameters('SchedulerDBServiceTier'), '_')[1]]"
+          }
+        },
+        {
+          "name": "HPCReporting",
+          "type": "databases",
+          "location": "[resourceGroup().location]",
+          "tags": {
+            "displayName": "HPCReporting"
+          },
+          "apiVersion": "2014-04-01",
+          "dependsOn": [
+            "[parameters('sqlServerName')]"
+          ],
+          "properties": {
+            "edition": "[split(parameters('ReportingDBServiceTier'), '_')[0]]",
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "maxSizeBytes": "107374182400",
+            "requestedServiceObjectiveName": "[split(parameters('ReportingDBServiceTier'), '_')[1]]"
+          }
+        },
+        {
+          "name": "HPCDiagnostics",
+          "type": "databases",
+          "location": "[resourceGroup().location]",
+          "tags": {
+            "displayName": "HPCDiagnostics"
+          },
+          "apiVersion": "2014-04-01",
+          "dependsOn": [
+            "[parameters('sqlServerName')]"
+          ],
+          "properties": {
+            "edition": "[split(parameters('DiagnosticsDBServiceTier'), '_')[0]]",
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "maxSizeBytes": "107374182400",
+            "requestedServiceObjectiveName": "[split(parameters('DiagnosticsDBServiceTier'), '_')[1]]"
+          }
+        },
+        {
+          "name": "HPCMonitoring",
+          "type": "databases",
+          "location": "[resourceGroup().location]",
+          "tags": {
+            "displayName": "HPCMonitoring"
+          },
+          "apiVersion": "2014-04-01",
+          "dependsOn": [
+            "[parameters('sqlServerName')]"
+          ],
+          "properties": {
+            "edition": "[split(parameters('MonitoringDBServiceTier'), '_')[0]]",
+            "collation": "SQL_Latin1_General_CP1_CI_AS",
+            "maxSizeBytes": "107374182400",
+            "requestedServiceObjectiveName": "[split(parameters('MonitoringDBServiceTier'), '_')[1]]"
+          }
+        },
+        {
+          "type": "virtualNetworkRules",
+          "apiVersion": "2015-05-01-preview",
+          "dependsOn": [
+            "[parameters('sqlServerName')]"
+          ],
+          "location": "[resourceGroup().location]",
+          "name": "[concat(resourceGroup().name, '-', variables('virtualNetworkName'))]",
+          "properties": {
+            "virtualNetworkSubnetId": "[variables('subnetRef')]"
+          }
+        }
+      ]
+    },
+    {
       "condition": "[equals(parameters('createPublicIPAddressForHeadNode'), 'Yes')]",
       "apiVersion": "2018-08-01",
       "type": "Microsoft.Network/publicIPAddresses",
@@ -561,6 +841,7 @@
       "name": "[variables('nicNameHN')]",
       "location": "[resourceGroup().location]",
       "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
         "[concat('Microsoft.Network/networkSecurityGroups/', variables('nsgName'))]",
         "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPName'))]"
       ],
@@ -569,7 +850,8 @@
           {
             "name": "IPConfig",
             "properties": {
-              "privateIPAllocationMethod": "Dynamic",
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "10.0.0.4",
               "publicIPAddress": "[if(equals(parameters('createPublicIPAddressForHeadNode'), 'Yes'), variables('publicIpAddressId') , json('null'))]",
               "subnet": {
                 "id": "[variables('subnetRef')]"
@@ -640,58 +922,12 @@
       }
     },
     {
-      "apiVersion": "2017-05-10",
-      "type": "Microsoft.Resources/deployments",
-      "name": "[concat('joinDomain', parameters('clusterName'))]",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', parameters('clusterName'))]"
-      ],
-      "properties": {
-        "mode": "Incremental",
-        "templateLink": {
-          "uri": "[concat(variables('sharedResxBaseUrl'),'/dsc-extension.json')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "vmName": {
-            "value": "[parameters('clusterName')]"
-          },
-          "dscExtensionName": {
-            "value": "setupHpcHeadNode"
-          },
-          "dscSettings": {
-            "value": {
-              "configuration": {
-                "url": "[concat(variables('sharedResxBaseUrl'),'/JoinADDomain.ps1.zip')]",
-                "script": "JoinADDomain.ps1",
-                "function": "JoinADDomain"
-              },
-              "configurationArguments": {
-                "DomainName": "[parameters('domainName')]"
-              }
-            }
-          },
-          "dscProtectedSettings": {
-            "value": {
-              "configurationArguments": {
-                "AdminCreds": {
-                  "UserName": "[parameters('adminUsername')]",
-                  "Password": "[parameters('adminPassword')]"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
+      "apiVersion": "2017-12-01",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(parameters('clusterName'),'/setupHpcHeadNode')]",
-      "apiVersion": "2017-12-01",
       "location": "[resourceGroup().location]",
       "dependsOn": [
-        "[concat('Microsoft.Resources/deployments/joinDomain', parameters('clusterName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('clusterName'))]"
       ],
       "properties": {
         "publisher": "Microsoft.Powershell",
@@ -700,31 +936,153 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "configuration": {
-            "url": "[concat(variables('sharedResxBaseUrl'),'/InstallHpcSingleHeadNode.ps1.zip')]",
-            "script": "InstallHpcSingleHeadNode.ps1",
-            "function": "InstallHpcSingleHeadNode"
+            "url": "[concat(variables('sharedResxBaseUrl'),'/CreateADPDC.ps1.zip')]",
+            "script": "CreateADPDC.ps1",
+            "function": "CreateADPDC"
           },
           "configurationArguments": {
-            "SSLThumbprint": "[parameters('certThumbprint')]",
-            "CNSize": "[parameters('computeNodeVMSize')]",
-            "SubscriptionId": "[subscription().subscriptionId]",
-            "VNet": "[parameters('virtualNetworkName')]",
-            "Subnet": "[parameters('subnetName')]",
-            "Location": "[resourceGroup().location]",
-            "ResourceGroup": "[parameters('virtualNetworkResourceGroupName')]",
-            "VaultResourceGroup": "[parameters('VaultResourceGroup')]",
-            "CertificateUrl": "[parameters('CertificateUrl')]",
-            "CNNamePrefix": "[parameters('computeNodeNamePrefix')]"
+            "DomainName": "[parameters('domainName')]"
           }
         },
         "protectedSettings": {
           "configurationArguments": {
-            "SetupUserCredential": {
-              "UserName": "[concat(parameters('domainName'), '\\', parameters('adminUsername'))]",
+            "AdminCreds": {
+              "UserName": "[parameters('adminUsername')]",
               "Password": "[parameters('adminPassword')]"
-            },
-            "AzureStorageConnString": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountId'), '2017-10-01').keys[0].value)]"
+            }
           }
+        }
+      }
+    },
+    {
+      "apiVersion": "2018-05-01",
+      "type": "Microsoft.Resources/deployments",
+      "name": "updateVNetDNS",
+      "dependsOn": [
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('clusterName'), '/extensions/setupHpcHeadNode')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": [
+            {
+              "apiVersion": "2018-08-01",
+              "name": "[variables('virtualNetworkName')]",
+              "type": "Microsoft.Network/virtualNetworks",
+              "location": "[resourceGroup().location]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[variables('addressPrefix')]"
+                  ]
+                },
+                "dhcpOptions": {
+                  "dnsServers": [
+                    "10.0.0.4",
+                    "8.8.8.8"
+                  ]
+                },
+                "subnets": [
+                  {
+                    "name": "[variables('subnet1Name')]",
+                    "properties": {
+                      "addressPrefix": "[variables('subnet1Prefix')]",
+                      "serviceEndpoints": [
+                        {
+                          "service": "Microsoft.Sql",
+                          "locations": [
+                            "[resourceGroup().location]"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "condition": "[and(variables('createHNInAVSet'), variables('hnRDMACapable'))]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('clusterName'),'/installInfiniBandDriver')]",
+      "apiVersion": "2017-12-01",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "updateVNetDNS"
+      ],
+      "properties": {
+        "publisher": "Microsoft.HpcCompute",
+        "type": "InfiniBandDriverWindows",
+        "typeHandlerVersion": "1.1",
+        "autoUpgradeMinorVersion": true
+      }
+    },
+    {
+      "apiVersion": "2018-05-01",
+      "type": "Microsoft.Resources/deployments",
+      "name": "installHpcHeadNode",
+      "dependsOn": [
+        "[concat('Microsoft.Sql/servers/', parameters('sqlServerName'))]",
+        "[concat('Microsoft.Compute/virtualMachines/', parameters('clusterName'), '/extensions/installInfiniBandDriver')]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": [
+            {
+              "type": "Microsoft.Compute/virtualMachines/extensions",
+              "name": "[concat(parameters('clusterName'),'/setupHpcHeadNode')]",
+              "apiVersion": "2017-12-01",
+              "location": "[resourceGroup().location]",
+              "properties": {
+                "publisher": "Microsoft.Powershell",
+                "type": "DSC",
+                "typeHandlerVersion": "2.20",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                  "configuration": {
+                    "url": "[concat(variables('sharedResxBaseUrl'),'/InstallHpcSingleHeadNode.ps1.zip')]",
+                    "script": "InstallHpcSingleHeadNode.ps1",
+                    "function": "InstallHpcSingleHeadNode"
+                  },
+                  "configurationArguments": {
+                    "SQLServerInstance": "[reference(concat('Microsoft.Sql/servers/', parameters('sqlServerName'))).fullyQualifiedDomainName]",
+                    "SSLThumbprint": "[parameters('certThumbprint')]",
+                    "CNSize": "[parameters('computeNodeVMSize')]",
+                    "SubscriptionId": "[subscription().subscriptionId]",
+                    "VNet": "[variables('virtualNetworkName')]",
+                    "Subnet": "[variables('subnet1Name')]",
+                    "Location": "[resourceGroup().location]",
+                    "ResourceGroup": "[resourceGroup().name]",
+                    "VaultResourceGroup": "[parameters('VaultResourceGroup')]",
+                    "CertificateUrl": "[parameters('CertificateUrl')]",
+                    "CNNamePrefix": "[parameters('computeNodeNamePrefix')]"
+                  }
+                },
+                "protectedSettings": {
+                  "configurationArguments": {
+                    "SetupUserCredential": {
+                      "UserName": "[concat(parameters('domainName'), '\\', parameters('adminUsername'))]",
+                      "Password": "[parameters('adminPassword')]"
+                    },
+                    "AzureStorageConnString": "[concat('DefaultEndpointsProtocol=https;AccountName=', variables('storageAccountName'), ';AccountKey=', listKeys(variables('storageAccountId'), '2017-10-01').keys[0].value)]",
+                    "SqlLoginCredential": {
+                      "UserName": "[parameters('sqlLoginName')]",
+                      "Password": "[parameters('sqlLoginPassword')]"
+                    }
+                  }
+                }
+              }
+            }
+          ]
         }
       }
     },
@@ -733,7 +1091,8 @@
       "type": "Microsoft.Resources/deployments",
       "name": "[concat('create', parameters('computeNodeNamePrefix'), padLeft(string(copyIndex()), 3, '0'))]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]"
+        "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
+        "Microsoft.Resources/deployments/updateVNetDNS"
       ],
       "copy": {
         "name": "CN",
