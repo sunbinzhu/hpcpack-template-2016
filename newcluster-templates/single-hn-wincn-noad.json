@@ -346,14 +346,14 @@
     "headNodeImages": {
       "WindowsServer2012R2": {
         "publisher": "MicrosoftWindowsServerHPCPack",
-        "offer": "WindowsServerHPCPack",
-        "sku": "2016U2HN-WS2012R2",
+        "offer": "WindowsServerHPCPack-preview",
+        "sku": "2016u3hn-ws2012r2",
         "version": "latest"
       },
       "WindowsServer2016": {
         "publisher": "MicrosoftWindowsServerHPCPack",
-        "offer": "WindowsServerHPCPack",
-        "sku": "2016U2HN-WS2016",
+        "offer": "WindowsServerHPCPack-preview",
+        "sku": "2016u3hn-ws2016",
         "version": "latest"
       },
       "CustomImage": {
@@ -393,13 +393,13 @@
       },
       "WindowsServer2012R2WithExcel": {
         "publisher": "MicrosoftWindowsServerHPCPack",
-        "offer": "WindowsServerHPCPack",
+        "offer": "WindowsServerHPCPack-preview",
         "sku": "2016U2CN-WS2012R2-Excel",
         "version": "latest"
       },
       "WindowsServer2016WithExcel": {
         "publisher": "MicrosoftWindowsServerHPCPack",
-        "offer": "WindowsServerHPCPack",
+        "offer": "WindowsServerHPCPack-preview",
         "sku": "2016U2CN-WS2016-Excel",
         "version": "latest"
       },
